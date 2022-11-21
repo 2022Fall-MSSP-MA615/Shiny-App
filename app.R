@@ -1,58 +1,48 @@
 library(shiny)
 library(dplyr)
-library(leaflet)
 library(DT)
 library(shinyWidgets)
 library(tidyverse)
 library(magrittr)
 
-data <- read.csv("D:/R dataset/615/tmp7_f32p54.csv")
+data <- read.csv("D:/R dataset/615/Cannabis_Registry.csv")
 data <- data.frame(data)
-data <- data[data$MONTH == "12",]
-data$Lat <- as.numeric(data$Lat)
-data$Long <- as.numeric(data$Long)
-data <- filter(data, Lat != 0)
-data <- filter(data, DISTRICT != "")
-data$SHOOTING[data$SHOOTING == "1"] <- "Shooting"
-data$SHOOTING[data$SHOOTING == "0"] <- "Not Shooting"
-
-data %<>% select(INCIDENT_NUMBER, DISTRICT, REPORTING_AREA, SHOOTING, OCCURRED_ON_DATE, STREET, Lat, Long, Location)
-
-pal <- colorFactor(pal = c("#a31013", "#0259fa"), domain = c('Shooting','Not Shooting'))
+data <- data %>% rename(Longitude = x)
+data <- data %>% rename(Latitude = y)
+data$Latitude <- as.numeric(data$Latitude)
+data$Longitude <- as.numeric(data$Longitude)
+data %<>% select(ObjectId, updated_timestamp, SAM_ID, Application_Status, Facility_Address, Main_Entity_Name,
+                 Type_of_Marijuana_License, Latitude, Longitude)
 
 ui <- fluidPage(
-  sidebarLayout(mainPanel(navbarPage("2021 Crime Incident Report", id="main",
-                                     tabPanel("Map", leafletOutput("bbmap", height=1000)),
+  sidebarLayout(mainPanel(navbarPage("Cannabis Registry", id="main",
                                      tabPanel("Data", DT::dataTableOutput("data")))),
                 sidebarPanel(top = 50, right = 10,
-                             pickerInput("DISTRICT", label = "Select a district:",
-                                         choices = list("All districts", 
-                                                        "A1","A7","A15","B2","B3","C6","C11","D4","D14","E5",
-                                                        "E13","E18","External"),
+                             pickerInput("Application Status", label = "Select a status:",
+                                         choices = list("Approved BCB - Executed HCA - Pending CCC",
+                                                        "Open for Operations", "Open for operation",
+                                                        "Conditionally approved", "Approved", 
+                                                        "Withdrawn", "Executed HCA - Pending CCC", 
+                                                        "Approved BCB - Executed HCA - Pending CCC - Equity"),
                                          options = list(
                                            `live-search` = TRUE)))
-))
+  ))
 
-server <- shinyServer(function(input, output, session) {
+server <- function(input, output, session) {
   filteredData <- reactive({
-    if (input$DISTRICT == "All districts") {
+    if (input$Application_Status == "All status") {
       data
     } else {
-      filter(data, DISTRICT == input$DISTRICT)
+      filter(data, Application_Status == input$Application_Status)
     }
   })
-
+  
   
   output$data <-DT::renderDataTable(datatable(
     data,filter = 'top',
-    colnames = c("INCIDENT_NUMBER", "DISTRICT", "REPORTING_AREA", "SHOOTING", 
-                 "OCCURRED_ON_DATE", "STREET", "Lat", "Long", "Location")
+    colnames = c("ObjectId", "updated_timestamp", "SAM_ID", "Application_Status", "Facility_Address",
+                 "Main_Entity_Name", "Type_of_Marijuana_License", "Latitude", "Longitude" )
   ))
-})
+}
 
 shinyApp(ui, server)
-
-
-
-
-###
