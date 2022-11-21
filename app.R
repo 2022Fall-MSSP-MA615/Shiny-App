@@ -18,7 +18,6 @@ data <- data %>% rename(Longitude = x)
 data <- data %>% rename(Latitude = y)
 data$Latitude <- as.numeric(data$Latitude)
 data$Longitude <- as.numeric(data$Longitude)
-data %<>% rename(Application_Status = "\u9518\u7dfcpplication_Status")
 data %<>% select(ObjectId, updated_timestamp, SAM_ID, Application_Status, Facility_Address, Main_Entity_Name,
                  Type_of_Marijuana_License, Latitude, Longitude)
 
